@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Earning Rusher AI Headquarters</title>
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#050a18;color:#e8f6ff;font:13px system-ui,sans-serif;overflow:hidden}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#err{display:none;position:fixed;top:40%;left:10%;right:10%;padding:16px;background:#200;border:1px solid #f55;border-radius:8px;z-index:9}
+#top{position:fixed;top:0;left:0;right:0;padding:calc(6px + env(safe-area-inset-top)) 8px 14px;pointer-events:none;background:linear-gradient(#050a18e6,transparent)}
+#ttl{font:700 15px Georgia,serif;letter-spacing:.06em;color:#ffc83d;text-shadow:0 0 10px #19d3ff88;margin-bottom:5px}
+#ttl span{color:#19d3ff;font-weight:400}
+#chips{display:flex;gap:5px;overflow-x:auto;pointer-events:auto;scrollbar-width:none}
+.chip{flex:none;display:flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #19d3ff55;border-radius:12px;background:#08142acc;font-size:11px}
+.chip i{width:8px;height:8px;border-radius:50%;background:#7aa8ff}
+.chip b{color:#ffc83d;font-weight:600;min-width:26px;text-align:right}
+#chat{position:fixed;left:0;right:0;bottom:0;background:#050c1cdd;border-top:1px solid #ffc83d88;padding:6px 8px calc(8px + env(safe-area-inset-bottom));backdrop-filter:blur(6px)}
+#hd{display:flex;justify-content:space-between;align-items:center;color:#ffc83d;font-weight:600;padding:2px 0 5px}
+#tg{background:none;border:1px solid #19d3ff66;color:#19d3ff;border-radius:6px;padding:1px 9px;font-size:12px}
+#log{height:24vh;overflow-y:auto;touch-action:pan-y;font-size:12.5px;line-height:1.4}
+#chat.min #log,#chat.min #qs{display:none}
+.m{padding:3px 0;border-bottom:1px solid #ffffff10}
+.m b{color:#19d3ff}.m.u b{color:#ffc83d}.m.r{color:#b8ffd0}
+#qs{display:flex;gap:5px;overflow-x:auto;padding:5px 0;scrollbar-width:none}
+#qs button{flex:none;background:#0c1f40;color:#cfeaff;border:1px solid #19d3ff55;border-radius:12px;padding:4px 9px;font-size:11.5px}
+#f{display:flex;gap:6px}
+#in{flex:1;background:#0a1630;color:#fff;border:1px solid #19d3ff88;border-radius:8px;padding:9px;font-size:15px;min-width:0}
+#f button{background:#ffc83d;color:#1a1200;border:0;border-radius:8px;padding:0 16px;font-weight:700}
+#mode{font:600 10px system-ui;font-style:normal;border:1px solid currentColor;border-radius:8px;padding:1px 6px;margin-left:4px;color:#ffc83d;letter-spacing:0}
+.hb{display:flex;gap:5px}.hb button{background:none;border:1px solid #19d3ff66;color:#19d3ff;border-radius:6px;padding:1px 9px;font-size:13px}
+#f #mic{background:#0c1f40;color:#ffc83d;border:1px solid #ffc83d;white-space:nowrap;padding:0 10px;font-size:13px}
+#f #mic.on{background:#c01818;color:#fff;border-color:#ff6b6b}
+.tg{font-size:9.5px;padding:1px 5px;border-radius:6px;margin-right:5px;background:#ffc83d30;color:#ffc83d;font-weight:700}.tg.ok{background:#4dff8830;color:#4dff88}
+#lis{display:none;position:fixed;top:calc(72px + env(safe-area-inset-top));left:12px;right:12px;align-items:center;gap:8px;padding:9px 12px;background:#3a0a0af0;border:1px solid #ff6b6b;border-radius:10px;font-size:14px;z-index:6}
+#lis:before{content:"";width:12px;height:12px;border-radius:50%;background:#ff4040;animation:bl 1s infinite;flex:none}@keyframes bl{50%{opacity:.25}}
+#set{display:none;position:fixed;top:calc(70px + env(safe-area-inset-top));left:10px;right:10px;max-height:62vh;overflow-y:auto;background:#07122aef;border:1px solid #ffc83d99;border-radius:12px;padding:12px;z-index:7;font-size:13px}
+#set h4{color:#ffc83d;margin-bottom:6px}#set label{display:block;padding:5px 0}#set input[type=checkbox]{margin-right:8px}
+#set select,#set #sa{width:100%;margin-top:4px;background:#0a1630;color:#fff;border:1px solid #19d3ff88;border-radius:6px;padding:7px;font-size:14px}
+#set .row{display:flex;gap:6px;margin:8px 0}#set .row button{flex:1;background:#0c1f40;color:#cfeaff;border:1px solid #19d3ff88;border-radius:8px;padding:8px}
+#sn{font-size:11.5px;color:#9fb8d8;line-height:1.45}
+</style></head><body>
+<canvas id="c"></canvas>
+<div id="err">Three.js could not load. Connect to the internet and reload the page.</div>
+<div id="top"><div id="ttl">EARNING RUSHER <span>AI Headquarters</span> <em id="mode">DEMO MODE</em></div><div id="chips"></div></div>
+<div id="chat">
+<div id="hd"><span>Alex, Manager Agent</span><span class="hb"><button id="mu" title="Mute / unmute Alex">🔊</button><button id="gs" title="Voice settings">⚙</button><button id="tg">hide</button></span></div>
+<div id="log"></div>
+<div id="qs"></div>
+<form id="f"><button type="button" id="mic">🎤 Talk to Alex</button><input id="in" placeholder="Type or tap the mic..." autocomplete="off"><button>Send</button></form>
+</div>
+<div id="lis"><span id="lt">Listening... speak now (tap to stop)</span></div>
+<div id="set"><h4>Alex voice settings</h4>
+<label><input type="checkbox" id="sv">Alex's voice on (unmute)</label>
+<label><input type="checkbox" id="sr">Speak Alex's replies aloud</label>
+<label><input type="checkbox" id="sd">Announce completed tasks (simulated)</label>
+<label><input type="checkbox" id="se">Announce important backend events</label>
+<label>Language<select id="sl"><option value="hi-IN">Hindi / Hinglish</option><option value="en-IN">English (India)</option></select></label>
+<label>Backend URL (never put an API key here)<input id="sa" placeholder="https://your-worker.workers.dev"></label>
+<div class="row"><button type="button" id="sT">Test backend</button><button type="button" id="tv">Test voice</button><button type="button" id="sx">Close</button></div>
+<p id="sn">The microphone starts only when you tap "Talk to Alex", and stops after one sentence. This app does not store audio. Chrome may send speech to its own speech service for recognition. Alex speaks only while this page is open. Without a backend URL, replies are DEMO replies, and agent task results are always SIMULATED.</p></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(()=>{
+if(!window.THREE){document.getElementById('err').style.display='block';return}
+const $=id=>document.getElementById(id);
+const cv=$('c');
+const R=new THREE.WebGLRenderer({canvas:cv,antialias:false,powerPreference:'high-performance'});
+let pr=Math.min(devicePixelRatio||1,1.5);R.setPixelRatio(pr);
+const S=new THREE.Scene();S.background=new THREE.Color(0x050a18);S.fog=new THREE.FogExp2(0x050a18,.014);
+const cam=new THREE.PerspectiveCamera(50,1,.1,90);
+const mat=(c,o)=>new THREE.MeshLambertMaterial(Object.assign({color:c},o||{}));
+const bas=(c,o)=>new THREE.MeshBasicMaterial(Object.assign({color:c},o||{}));
+const BX=(w,h,d)=>new THREE.BoxGeometry(w,h,d),CY=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s||12),SP=(r,s)=>new THREE.SphereGeometry(r,s||12,10),TR=(r,t,s,arc)=>new THREE.TorusGeometry(r,t,6,s||40,arc||Math.PI*2);
+function add(g,m,x,y,z,p){const o=new THREE.Mesh(g,m);o.position.set(x||0,y||0,z||0);(p||S).add(o);return o}
+function cvs(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;return c}
+const hex=n=>'#'+n.toString(16).padStart(6,'0');
+const ang=(c,t,k)=>c+Math.atan2(Math.sin(t-c),Math.cos(t-c))*k;
+const lp=(c,t,k)=>c+(t-c)*Math.min(1,k);
+const rn=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+
+/* lights */
+S.add(new THREE.HemisphereLight(0x9fc4ff,0x1a2040,.85));
+const L1=new THREE.PointLight(0x19d3ff,1.3,30);L1.position.set(0,6,0);S.add(L1);
+const L2=new THREE.PointLight(0xffc83d,1.1,26);L2.position.set(0,5,-9);S.add(L2);
+const L3=new THREE.PointLight(0xffc83d,.8,16);L3.position.set(-7,4,5);S.add(L3);
+
+/* room */
+const fl=add(new THREE.PlaneGeometry(24,24),mat(0x0b1630),0,0,0);fl.rotation.x=-Math.PI/2;
+const gr=new THREE.GridHelper(24,24,0x19d3ff,0x14305a);gr.position.y=.02;S.add(gr);
+add(new THREE.PlaneGeometry(24,8),mat(0x0a1226),0,4,-12);
+// glass walls + frames
+[-12,12].forEach(x=>{
+ const w=add(new THREE.PlaneGeometry(24,8),mat(0x66ccff,{transparent:true,opacity:.14,side:THREE.DoubleSide}),x,4,0);w.rotation.y=Math.PI/2;
+ [-12,-6,0,6,12].forEach(z=>add(BX(.12,8,.12),bas(0x19d3ff),x,4,z));
+ add(BX(.1,.1,24),bas(0xffc83d),x,7.9,0);add(BX(.1,.08,24),bas(0x19d3ff),x,.1,0);
+});
+add(BX(24,.1,.1),bas(0x19d3ff),0,7.7,-11.95);add(BX(24,.1,.1),bas(0xffc83d),0,.15,-11.95);
+// skyline outside
+for(let i=0;i<26;i++){const s=i%2?1:-1,h=3+Math.random()*12;add(BX(2+Math.random()*2,h,2+Math.random()*2),bas(i%3?0x0b1d3c:0x13294e),s*(16+Math.random()*10),h/2-1,-14+Math.random()*26)}
+// branding
+const bc=cvs(1024,256),bx=bc.getContext('2d');
+let g=bx.createLinearGradient(0,0,1024,0);g.addColorStop(0,'#06142e');g.addColorStop(1,'#0a1d40');bx.fillStyle=g;bx.fillRect(0,0,1024,256);
+bx.strokeStyle='#ffc83d';bx.lineWidth=6;bx.strokeRect(8,8,1008,240);
+bx.textAlign='center';bx.shadowColor='#19d3ff';bx.shadowBlur=24;bx.fillStyle='#ffc83d';bx.font='bold 112px Georgia,serif';bx.fillText('EARNING RUSHER',512,142);
+bx.shadowBlur=10;bx.fillStyle='#19d3ff';bx.font='46px sans-serif';bx.fillText('A I   H E A D Q U A R T E R S',512,210);
+add(new THREE.PlaneGeometry(12,3),bas(0xffffff,{map:new THREE.CanvasTexture(bc)}),0,4.6,-11.9);
+// wall dashboards
+const dc=cvs(256,160),dx=dc.getContext('2d');dx.fillStyle='#04101f';dx.fillRect(0,0,256,160);
+for(let i=0;i<14;i++){dx.fillStyle=i%3?'#19d3ff':'#ffc83d';const h=20+Math.random()*100;dx.fillRect(14+i*17,150-h,12,h)}
+const dm=bas(0xffffff,{map:new THREE.CanvasTexture(dc)});
+add(new THREE.PlaneGeometry(4,2.5),dm,-8,4.4,-11.9);add(new THREE.PlaneGeometry(4,2.5),dm,8,4.4,-11.9);
+// ceiling rings
+const r1=add(TR(3.9,.06,60),bas(0x19d3ff),0,5.6,0);r1.rotation.x=Math.PI/2;
+const r2=add(TR(2.6,.05,60),bas(0xffc83d),0,5.6,0);r2.rotation.x=Math.PI/2;
+// plants
+function plant(x,z,s){add(CY(.4*s,.3*s,.6*s),mat(0x2a2f44),x,.3*s,z);[[0,1,0,.55],[.25,1.3,.1,.4],[-.2,1.2,-.15,.42]].forEach(p=>add(SP(p[3]*s,8),mat(0x1f9d55),x+p[0]*s,p[1]*s,z+p[2]*s))}
+[[-11,-10.8],[11,-10.8],[-11,10.8],[11,10.8],[-3.8,-10.5],[3.8,-10.5],[11,0]].forEach(p=>plant(p[0],p[1],1.4));
+// server rack
+add(BX(1.4,3.2,1),mat(0x10182c),10.2,1.6,-8);
+for(let i=0;i<7;i++)add(BX(1.1,.08,.05),bas(i%2?0x19d3ff:0xffc83d),10.2,.6+i*.4,-7.46);
+// lounge
+add(BX(1.6,.5,4.2),mat(0x1c2a5a),-11,.25,5.5);add(BX(.4,1.1,4.2),mat(0x1c2a5a),-11.7,.8,5.5);
+add(BX(1.2,.45,1.6),mat(0x0d2540),-9.3,.22,5.5);add(BX(1.25,.05,1.65),bas(0xffc83d),-9.3,.46,5.5);
+add(CY(.05,.05,2.2),mat(0x888888),-11.4,1.1,8.2);add(SP(.3,8),bas(0xffe9a8),-11.4,2.3,8.2);
+const lcv=cvs(256,64),lx=lcv.getContext('2d');lx.fillStyle='#ffc83d';lx.font='bold 34px sans-serif';lx.textAlign='center';lx.fillText('BREAK LOUNGE',128,42);
+add(new THREE.PlaneGeometry(3,.75),bas(0xffffff,{map:new THREE.CanvasTexture(lcv),transparent:true}),-11.9,3,5.5).rotation.y=Math.PI/2;
+const LG=[[-7.5,3.5],[-7.5,5.5],[-7.5,7.5],[-6,4.5],[-6,6.5],[-4.5,3.5],[-4.5,5.5],[-4.5,7.5]];
+
+/* central table */
+add(CY(2.6,2.6,.14,40),mat(0x0d2540),0,1.1,0);
+const rim=add(TR(2.6,.05,60),bas(0xffc83d),0,1.18,0);rim.rotation.x=Math.PI/2;
+const rim2=add(TR(1.3,.03,50),bas(0x19d3ff),0,1.19,0);rim2.rotation.x=Math.PI/2;
+add(CY(.5,.8,1.1,16),mat(0x142a4a),0,.55,0);
+const holo=add(new THREE.IcosahedronGeometry(.5,1),bas(0x19d3ff,{wireframe:true}),0,2.2,0);
+const holoR=add(TR(.8,.03,40),bas(0xffc83d),0,2.2,0);
+const hl=cvs(256,64),hx=hl.getContext('2d');hx.fillStyle='#ffc83d';hx.font='bold 30px sans-serif';hx.textAlign='center';hx.fillText('ALEX CORE',128,40);
+const hs=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(hl),transparent:true}));hs.scale.set(1.6,.4,1);hs.position.set(0,3,0);S.add(hs);
+
+/* agents */
+const SK=[0xf1c9a5,0xc68642,0x8d5524,0xe0ac69,0xffdbac,0xa86b3c,0xf1c9a5,0xd9a066];
+const AG=[
+{n:'Alex',r:'Manager Agent',c:0xffc83d,hair:0x222222,acc:'tie'},
+{n:'Dev',r:'App Developer',c:0x19d3ff,hair:0x5a3a1a,acc:'glasses'},
+{n:'Coin',r:'Coin & Rewards Monitor',c:0xf5a623,hair:0xd8a020,acc:'cap'},
+{n:'AdMax',r:'Advertising Monitor',c:0xff4d8d,hair:0x111133,acc:'headset'},
+{n:'TaskPro',r:'Offerwall Manager',c:0x7cff6b,hair:0x884422,acc:'bun'},
+{n:'Shield',r:'Security Monitor',c:0x9b6bff,hair:0x000000,acc:'visor'},
+{n:'Support',r:'Customer Support',c:0x2ee6b8,hair:0x6b2d1a,acc:'headset'},
+{n:'Insight',r:'Analytics Agent',c:0xff8a3d,hair:0xcccccc,acc:'glasses'}];
+const NA=AG.length,SR=3.3;
+const TASK={Dev:'Scan app for bugs',Coin:'Audit coins & rewards',AdMax:'Check ad performance',TaskPro:'Review offerwall stats',Shield:'Run security sweep',Support:'Review support tickets',Insight:'Build analytics report'};
+AG.forEach((a,i)=>{
+ a.i=i;const an=-Math.PI/2+i*Math.PI*2/NA,cs=Math.cos(an),sn=Math.sin(an);
+ a.sx=cs*SR;a.sz=sn*SR;a.ox=cs*6.6;a.oz=sn*6.6;a.sface=a.face=Math.atan2(-a.sx,-a.sz);a.lx=LG[i][0];a.lz=LG[i][1];a.lface=0;
+ // chair
+ const chr=new THREE.Group();chr.position.set(cs*(SR+.12),0,sn*(SR+.12));chr.rotation.y=a.sface;S.add(chr);
+ add(CY(.45,.45,.05),mat(0x1a2540),0,.03,0,chr);add(CY(.07,.07,.45,6),mat(0x222a3a),0,.25,0,chr);
+ add(BX(.9,.12,.9),mat(0x1a2540),0,.52,0,chr);add(BX(.9,.95,.1),mat(0x1a2540),0,1.02,-.42,chr);add(BX(.9,.05,.12),bas(a.c),0,1.5,-.42,chr);
+ // laptop
+ const lt=new THREE.Group();lt.position.set(cs*2.3,1.17,sn*2.3);lt.rotation.y=a.sface;S.add(lt);
+ add(BX(.9,.05,.6),mat(0x1b2338),0,0,0,lt);add(BX(.8,.01,.3),bas(a.c),0,.03,-.1,lt);
+ const hg=new THREE.Group();hg.position.set(0,.03,.28);hg.rotation.x=.25;lt.add(hg);
+ add(BX(.9,.6,.04),mat(0x10182c),0,.3,0,hg);
+ a.sc=cvs(256,160);a.sx2=a.sc.getContext('2d');a.stx=new THREE.CanvasTexture(a.sc);
+ const pl=add(new THREE.PlaneGeometry(.82,.52),bas(0xffffff,{map:a.stx}),0,.3,-.025,hg);pl.rotation.y=Math.PI;
+ // character
+ const G=new THREE.Group();S.add(G);a.g=G;G.position.set(a.sx,0,a.sz);G.rotation.y=a.sface;
+ const C=new THREE.Group();G.add(C);a.ch=C;
+ const sk=mat(SK[i]),cm=mat(a.c);
+ add(CY(.27,.3,.75,10),cm,0,1.15,0,C);
+ a.legs=[-.13,.13].map(x=>{const p=new THREE.Group();p.position.set(x,.8,0);C.add(p);add(CY(.1,.09,.8,8),mat(0x1b2338),0,-.4,0,p);add(BX(.18,.1,.3),mat(0x111111),0,-.82,.07,p);return p});
+ a.arms=[-.4,.4].map(x=>{const p=new THREE.Group();p.position.set(x,1.45,0);C.add(p);add(CY(.075,.07,.62,8),cm,0,-.3,0,p);add(SP(.08,8),sk,0,-.64,0,p);return p});
+ const H=new THREE.Group();H.position.set(0,1.6,0);C.add(H);a.head=H;
+ add(SP(.27,14),sk,0,.27,0,H);
+ add(new THREE.SphereGeometry(.285,14,8,0,Math.PI*2,0,Math.PI*.42),mat(a.hair),0,.27,0,H);
+ [-.1,.1].forEach(x=>add(SP(.035,6),bas(0x111111),x,.31,.25,H));
+ add(BX(.1,.02,.02),bas(0x8a2b2b),0,.16,.26,H);
+ const A=a.acc;
+ if(A==='glasses'){[-.1,.1].forEach(x=>add(TR(.06,.01,12),bas(0x111111),x,.31,.265,H));add(BX(.08,.01,.01),bas(0x111111),0,.31,.265,H)}
+ if(A==='cap'){add(CY(.285,.29,.12,14),cm,0,.5,0,H);add(BX(.3,.02,.25),cm,0,.45,.3,H)}
+ if(A==='headset'){const b=add(TR(.3,.025,16,Math.PI),bas(a.c),0,.27,0,H);[-.3,.3].forEach(x=>{const e=add(CY(.07,.07,.06,8),bas(a.c),x,.27,0,H);e.rotation.z=Math.PI/2});add(BX(.02,.02,.2),bas(a.c),.28,.12,.14,H)}
+ if(A==='bun')add(SP(.12,8),mat(a.hair),0,.56,-.05,H);
+ if(A==='visor')add(BX(.5,.1,.08),bas(0x19d3ff,{transparent:true,opacity:.75}),0,.31,.25,H);
+ if(A==='tie')add(BX(.08,.3,.02),bas(0xffc83d),0,1.25,.3,C);
+ // label + bubble
+ a.lc=cvs(320,150);a.lx2=a.lc.getContext('2d');a.lt=new THREE.CanvasTexture(a.lc);
+ a.lab=new THREE.Sprite(new THREE.SpriteMaterial({map:a.lt,transparent:true}));a.lab.scale.set(2.5,1.17,1);G.add(a.lab);
+ a.bc=cvs(64,64);a.bx=a.bc.getContext('2d');a.bt=new THREE.CanvasTexture(a.bc);
+ a.bub=new THREE.Sprite(new THREE.SpriteMaterial({map:a.bt,transparent:true}));a.bub.scale.set(.6,.6,1);G.add(a.bub);a.bub.visible=false;
+ Object.assign(a,{sit:1,loc:'seat',dest:'seat',wp:[],cur:null,queue:[],restT:9999,st:'',stc:'#7aa8ff',p:0,thinkT:0,key:'',bk:'',sk:'',bi:''});
+ // beam from Alex
+ if(i){const gm=new THREE.BufferGeometry();gm.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));a.beam=new THREE.Line(gm,new THREE.LineBasicMaterial({color:0xffc83d,transparent:true}));a.beam.visible=false;a.beam.frustumCulled=false;S.add(a.beam)}
+});
+
+/* labels / screens / bubbles */
+function drawLabel(a,st,col,p){
+ const x=a.lx2;x.clearRect(0,0,320,150);x.fillStyle='rgba(5,12,30,.82)';x.fillRect(4,4,312,142);x.strokeStyle=hex(a.c);x.lineWidth=3;x.strokeRect(4,4,312,142);
+ x.fillStyle='#fff';x.font='bold 36px sans-serif';x.fillText(a.n,14,44);
+ x.fillStyle='#9fd8ff';x.font='19px sans-serif';x.fillText(a.r,14,70);
+ x.fillStyle=col;x.beginPath();x.arc(292,28,10,0,7);x.fill();
+ x.fillStyle='#ffe9a8';x.font='19px sans-serif';x.fillText(st.length>27?st.slice(0,26)+'...':st,14,102);
+ x.fillStyle='#16284a';x.fillRect(14,114,292,16);x.fillStyle=col;x.fillRect(14,114,292*p,16);
+ a.lt.needsUpdate=true}
+function drawScreen(a,mode,t){
+ const x=a.sx2;x.fillStyle='#04101f';x.fillRect(0,0,256,160);x.fillStyle=hex(a.c);x.fillRect(0,0,256,22);
+ x.fillStyle='#000';x.font='bold 14px sans-serif';x.fillText(a.n.toUpperCase()+' CONSOLE',8,16);
+ if(mode==='work'||mode==='think'){
+  x.fillStyle='#fff';x.font='bold 15px sans-serif';x.fillText((a.cur?a.cur.title:'').slice(0,28),8,44);
+  for(let i=0;i<7;i++){const w=40+Math.abs(Math.sin(t*2+i*1.7+a.i))*150;x.fillStyle=i%2?'#19d3ff':'#ffc83d';x.fillRect(8,56+i*12,w,7)}
+  x.fillStyle='#16284a';x.fillRect(8,144,240,8);x.fillStyle='#4dff88';x.fillRect(8,144,240*(a.cur?a.cur.p:0),8)
+ }else{x.fillStyle='#4a6a9a';x.font='bold 20px sans-serif';x.fillText('STANDBY',8,70);x.font='13px sans-serif';x.fillText('Waiting for tasks from Alex',8,92)}
+ a.stx.needsUpdate=true}
+function drawBubble(a,e){const x=a.bx;x.clearRect(0,0,64,64);if(e){x.fillStyle='rgba(255,255,255,.92)';x.beginPath();x.arc(32,32,28,0,7);x.fill();x.font='34px sans-serif';x.textAlign='center';x.fillStyle='#111';x.fillText(e,32,44)}a.bt.needsUpdate=true}
+
+/* movement helpers */
+function goSeat(a){if(a.loc==='seat'&&!a.wp.length)return;if(a.dest==='seat'&&a.wp.length)return;a.wp=[[a.ox,a.oz],[a.sx,a.sz]];a.dest='seat'}
+function goLounge(a){a.wp=[[a.ox,a.oz],[a.lx,a.lz]];a.dest='lounge'}
+
+/* tasks */
+const RES={
+Dev:()=>`Scanned ${rn(40,90)} modules. Found ${rn(2,7)} bugs (${rn(0,2)} critical), mostly null checks and slow screens. Fix list ready.`,
+Coin:()=>`Coins issued today: ${rn(80,260)}K. Pending payouts: ${rn(12,60)}. No abnormal reward spikes.`,
+AdMax:()=>`AdMob eCPM $${(rn(80,260)/100).toFixed(2)}, fill rate ${rn(88,99)}%, impressions ${rn(20,90)}K. Best unit: rewarded video.`,
+TaskPro:()=>`${rn(18,40)} offers live, completion rate ${rn(55,82)}%. Top offer converts ${rn(8,19)}%. ${rn(1,4)} weak offers paused.`,
+Shield:()=>`Checked ${rn(900,4000)} sessions. Flagged ${rn(1,9)} suspicious accounts (VPN or multi-account). No breach detected.`,
+Support:()=>`${rn(6,30)} tickets reviewed, ${rn(3,20)} resolved. Top issue: delayed payout. Replies drafted.`,
+Insight:()=>`DAU ${rn(4,15)}.${rn(0,9)}K (up ${rn(1,9)}%), D1 retention ${rn(30,48)}%. Revenue ${rn(2,12)}% above last week.`};
+const RULES=[
+[/offer|survey|wall|taskpro/i,['TaskPro']],
+[/admob|\bads?\b|advert|ecpm|impression|revenue/i,['AdMax']],
+[/bug|crash|\bapp\b|code|build|fix|error|update/i,['Dev']],
+[/coin|reward|payout|withdraw|redeem|balance/i,['Coin']],
+[/secur|fraud|hack|cheat|fake|vpn|threat|shield|abuse/i,['Shield']],
+[/support|ticket|complain|customer|feedback|review/i,['Support']],
+[/report|analytic|stat|insight|today|summary|growth|kpi/i,['Insight']],
+[/report|summary/i,['Coin','AdMax','TaskPro']],
+[/everything|all agents|full|team|status/i,['Dev','Coin','AdMax','TaskPro','Shield','Support','Insight']]];
+function kick(a){if(a.cur||!a.queue.length)return;a.cur=a.queue.shift();a.cur.ph='go';a.restT=9999;goSeat(a)}
+function assign(a,title){a.queue.push({title,p:0,ph:'q',dur:7+Math.random()*6});kick(a)}
+function finish(a){
+ const c=a.cur;a.cur=null;a.restT=3.5;
+ say(a.n,RES[a.n](),'r','SIMULATED');announce('done',CFG.lang==='en-IN'?`Simulated update: ${a.n} finished its task.`:`Demo update: ${a.n} ka task poora hua.`,false);
+ if(a.queue.length)kick(a)}
+function pick(txt){const set=[];RULES.forEach(r=>{if(r[0].test(txt))r[1].forEach(n=>{if(!set.includes(n))set.push(n)})});return set}
+function dispatch(set){set.forEach((n,k)=>setTimeout(()=>{const a=AG.find(q=>q.n===n);if(a&&TASK[n])assign(a,TASK[n])},k*450))}
+function demoReply(txt){let set=pick(txt),note='';const hi=CFG.lang!=='en-IN';if(!set.length){set=['Insight'];note=hi?' Pakka nahi tha, isliye Insight se shuru kar raha hoon.':' Not sure who fits, so starting with Insight.'}dispatch(set);return(hi?`Theek hai. ${set.join(', ')} ko kaam de raha hoon.`:`Understood. Assigning: ${set.join(', ')}.`)+note}
+async function ask(txt){const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),20000);
+ try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,lang:CFG.lang,history:hist.slice(-6),agents:AG.slice(1).map(a=>({name:a.n,busy:!!a.cur}))}),signal:ctl.signal});
+  if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(typeof j.reply!=='string')throw new Error('bad reply');
+  hist.push({role:'user',content:txt},{role:'assistant',content:j.reply});return{reply:j.reply,assign:Array.isArray(j.assign)?j.assign:[]}}finally{clearTimeout(to)}}
+
+/* chat UI */
+const log=$('log');
+function say(who,txt,cls,tag){const d=document.createElement('div');d.className='m '+(cls||'');if(tag){const g=document.createElement('span');g.className='tg'+(tag==='AI LIVE'||tag==='BACKEND EVENT'?' ok':'');g.textContent=tag;d.appendChild(g)}const b=document.createElement('b');b.textContent=who+': ';d.appendChild(b);d.appendChild(document.createTextNode(txt));log.appendChild(d);log.scrollTop=1e9;while(log.children.length>50)log.removeChild(log.firstChild)}
+async function send(txt,voice){txt=txt.trim();if(!txt)return;say('You',txt,'u');AG[0].thinkT=40;
+ let reply,tag,spoken;
+ if(CFG.api){try{const r=await ask(txt);reply=r.reply;tag='AI LIVE';spoken=reply;dispatch(r.assign.filter(n=>TASK[n]));setMode('live')}catch(e){setMode('err');say('System','Backend error ('+e.message+'). Using demo mode instead.','a','SYSTEM')}}
+ if(reply===undefined){await new Promise(r=>setTimeout(r,1200));reply=demoReply(txt);tag='DEMO';spoken=(CFG.lang==='en-IN'?'Demo mode. ':'Demo mode. ')+reply}
+ AG[0].thinkT=0;say('Alex',reply,'',tag);
+ if(CFG.voice&&(voice||CFG.reply))speak(spoken,true)}
+$('f').addEventListener('submit',e=>{e.preventDefault();const i=$('in');send(i.value);i.value=''});
+['Check offerwall performance','Find app bugs',"Generate today's report",'Check AdMob performance','Security check','Review support tickets'].forEach(q=>{const b=document.createElement('button');b.textContent=q;b.onclick=()=>send(q);$('qs').appendChild(b)});
+$('tg').onclick=()=>{const c=$('chat');c.classList.toggle('min');$('tg').textContent=c.classList.contains('min')?'show':'hide'};
+say('Alex','Welcome to Earning Rusher HQ. Tell me what to check and I will assign the right agents. (Demo mode: no real AI connected yet.)','','DEMO');
+const chips=AG.map(a=>{const d=document.createElement('div');d.className='chip';d.innerHTML='<i></i>'+a.n+' <b>0%</b>';$('chips').appendChild(d);return d});
+
+/* voice: mic starts only on button tap; nothing records in background */
+const CFG=Object.assign({voice:true,reply:true,done:true,events:true,lang:'hi-IN',api:''},(()=>{try{return JSON.parse(localStorage.getItem('erCfg')||'{}')}catch(e){return{}}})());
+const saveCfg=()=>{try{localStorage.setItem('erCfg',JSON.stringify(CFG))}catch(e){}};
+const SRc=window.SpeechRecognition||window.webkitSpeechRecognition,TTS='speechSynthesis' in window;
+let rec=null,listening=false,speaking=false,unlocked=false,heard='',lastSpoke=0,lto=0,asked=false;const pend=[],hist=[];
+function setMode(k){const m={demo:['DEMO MODE: no real AI','#ffc83d'],set:['BACKEND SET: not tested','#ffc83d'],ok:['BACKEND REACHABLE','#4dff88'],live:['AI LIVE: replied OK','#4dff88'],err:['BACKEND ERROR','#ff6b6b']}[k];$('mode').textContent=m[0];$('mode').style.color=m[1]}
+setMode(CFG.api?'set':'demo');
+function uiL(){$('lis').style.display=listening?'flex':'none';$('mic').textContent=listening?'⏹ Stop':'🎤 Talk to Alex';$('mic').classList.toggle('on',listening)}
+function syncMute(){$('mu').textContent=CFG.voice?'🔊':'🔇';$('sv').checked=CFG.voice}
+const quiet=()=>{try{speechSynthesis.cancel()}catch(e){}pend.length=0};
+function pickVoice(){const v=speechSynthesis.getVoices(),p=CFG.lang.slice(0,2);return v.find(x=>x.lang===CFG.lang)||v.find(x=>x.lang.toLowerCase().startsWith(p))||null}
+function speak(txt,now){
+ if(!TTS||!CFG.voice||!unlocked||!txt)return;if(now)speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(txt.slice(0,260));u.lang=CFG.lang;const v=pickVoice();if(v)u.voice=v;
+ u.onstart=()=>{speaking=true;AG[0].talk=1};u.onend=u.onerror=()=>{speaking=false;AG[0].talk=0;lastSpoke=Date.now()};
+ speechSynthesis.speak(u)}
+// announcements: queued, merged, never interrupt, min 12s gap, max 3 per batch
+function announce(kind,txt,logIt,tag){if(logIt)say('Alex',txt,'a',tag);if(!CFG.voice||!CFG[kind]||pend.includes(txt))return;if(pend.length<3)pend.push(txt)}
+setInterval(()=>{if(!pend.length||speaking||listening||document.hidden||!unlocked||Date.now()-lastSpoke<12000)return;speak(pend.splice(0).join(' '),false)},2500);
+function startListen(){
+ if(listening){try{rec.stop()}catch(e){}return}
+ if(!SRc){say('System','Voice input is not supported in this browser. Use Chrome on Android, on an https page.','a','SYSTEM');return}
+ unlocked=true;try{speechSynthesis.cancel()}catch(e){}
+ if(!asked){asked=true;say('System','Chrome will now ask for microphone permission. Allow it to talk to Alex.','a','SYSTEM')}
+ heard='';rec=new SRc();rec.lang=CFG.lang;rec.interimResults=true;rec.continuous=false;rec.maxAlternatives=1;
+ rec.onstart=()=>{listening=true;$('lt').textContent='Listening... speak now (tap to stop)';uiL()};
+ rec.onresult=e=>{let f='',q='';for(let i=0;i<e.results.length;i++){const r=e.results[i];if(r.isFinal)f+=r[0].transcript;else q+=r[0].transcript}heard=f+q;$('lt').textContent=heard||'Listening...'};
+ rec.onerror=e=>{const m={'not-allowed':'Microphone permission blocked. Allow Microphone in Chrome site settings.','service-not-allowed':'Speech service blocked. Open the page over https and allow the microphone.','no-speech':'Nothing heard. Try again.','audio-capture':'No microphone found.','network':'Speech recognition needs internet.'}[e.error];if(e.error!=='aborted')say('System',m||('Voice error: '+e.error),'a','SYSTEM');heard=''};
+ rec.onend=()=>{listening=false;clearTimeout(lto);uiL();const h=heard.trim();heard='';if(h)send(h,true)};
+ try{rec.start()}catch(e){listening=false;uiL()}
+ clearTimeout(lto);lto=setTimeout(()=>{try{rec.stop()}catch(e){}},15000)}
+function shutdown(){heard='';try{rec&&rec.abort()}catch(e){}listening=false;quiet();speaking=false;AG[0].talk=0;uiL()}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)shutdown()});addEventListener('pagehide',shutdown);
+// backend events: only items the backend marks verified:true; shown once each
+let seen=new Set();try{seen=new Set(JSON.parse(localStorage.getItem('erSeen')||'[]'))}catch(e){}
+async function pollEvents(){if(!CFG.api||document.hidden)return;try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/events',{cache:'no-store'});if(!r.ok)return;const j=await r.json();let n=0;
+ (j.events||[]).forEach(ev=>{if(n>=3||!ev||ev.verified!==true||!ev.id||!ev.title||seen.has(ev.id))return;n++;seen.add(ev.id);const imp=ev.severity==='high'||ev.severity==='critical';announce(imp?'events':'none',(CFG.lang==='en-IN'?'Important event: ':'Zaroori suchna: ')+String(ev.title).slice(0,120),true,'BACKEND EVENT')});
+ try{localStorage.setItem('erSeen',JSON.stringify([...seen].slice(-100)))}catch(e){}}catch(e){}}
+setInterval(pollEvents,60000);
+[['sv','voice'],['sr','reply'],['sd','done'],['se','events']].forEach(([id,k])=>{const e=$(id);e.checked=CFG[k];e.onchange=()=>{CFG[k]=e.checked;saveCfg();if(k==='voice')syncMute();if(!CFG.voice)quiet()}});
+$('mu').onclick=()=>{CFG.voice=!CFG.voice;saveCfg();syncMute();if(!CFG.voice)quiet()};
+$('sl').value=CFG.lang;$('sl').onchange=()=>{CFG.lang=$('sl').value;saveCfg()};
+$('sa').value=CFG.api;$('sa').onchange=()=>{let v=$('sa').value.trim();if(v&&!/^https:\/\/|^http:\/\/localhost/.test(v)){say('System','Backend URL must start with https://','a','SYSTEM');v='';$('sa').value=''}CFG.api=v;saveCfg();setMode(v?'set':'demo')};
+$('gs').onclick=()=>{const p=$('set');p.style.display=p.style.display==='block'?'none':'block'};$('sx').onclick=()=>{$('set').style.display='none'};
+$('tv').onclick=()=>{unlocked=true;speak(CFG.lang==='en-IN'?'This is a voice test from Alex.':'Namaste, main Alex hoon. Yeh awaaz ka test hai.',true)};
+$('sT').onclick=async()=>{if(!CFG.api){say('System','No backend URL yet. Still in demo mode.','a','SYSTEM');return}
+ try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/health'),j=await r.json();if(j.ok&&j.hasKey){setMode('ok');say('System','Backend reachable and API key present. Send a chat message to test a real AI reply.','a','SYSTEM')}else{setMode('err');say('System','Backend reached, but no API key is set on it.','a','SYSTEM')}}
+ catch(e){setMode('err');say('System','Could not reach backend. Check URL and ALLOWED_ORIGIN (CORS).','a','SYSTEM')}};
+$('mic').onclick=startListen;$('lis').onclick=()=>{try{rec.stop()}catch(e){}};
+if(!SRc||!TTS){$('mic').style.opacity=.5}
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{unlocked=true},{once:true,passive:true}));
+syncMute();uiL();
+/* camera orbit */
+let th=0,ph=1.05,rad=18,ty=.8;const P=new Map();let pd=0;
+const pinch=()=>{const v=[...P.values()];return Math.hypot(v[0][0]-v[1][0],v[0][1]-v[1][1])};
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);P.set(e.pointerId,[e.clientX,e.clientY]);if(P.size==2)pd=pinch()});
+cv.addEventListener('pointermove',e=>{
+ if(!P.has(e.pointerId))return;const o=P.get(e.pointerId);
+ if(P.size==1){th=Math.max(-1.5,Math.min(1.5,th-(e.clientX-o[0])*.006));ph=Math.max(.35,Math.min(1.4,ph-(e.clientY-o[1])*.005))}
+ P.set(e.pointerId,[e.clientX,e.clientY]);
+ if(P.size==2){const d=pinch();rad=Math.max(7,Math.min(32,rad*pd/d));pd=d}});
+const up=e=>P.delete(e.pointerId);cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{rad=Math.max(7,Math.min(32,rad+e.deltaY*.01))});
+function resize(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.fov=w/h<1?62:50;cam.updateProjectionMatrix();if(!resize.d){resize.d=1;rad=w/h<1?19:15}}
+addEventListener('resize',resize);resize();
+
+/* main loop */
+let t=0,last=performance.now(),sumdt=0,nf=0,uiT=0;
+function modeOf(a,walking){
+ if(walking)return'walk';
+ if(a.i===0){if(a.thinkT>0)return'think';return busy>0?'work':'idle'}
+ if(a.cur){return a.cur.ph==='think'?'think':a.cur.ph==='work'?'work':'idle'}
+ return a.loc==='lounge'?'done':'idle'}
+let busy=0;
+function frame(now){
+ requestAnimationFrame(frame);if(document.hidden){last=now;return}
+ const dt=Math.min((now-last)/1000,.05);last=now;t+=dt;
+ sumdt+=dt;if(++nf==90){if(sumdt/90>.034&&pr>1){pr=1;R.setPixelRatio(1);resize()}sumdt=0;nf=1e9}
+ busy=0;AG.forEach(a=>{if(a.i&&(a.cur||a.queue.length))busy++});
+ AG.forEach((a,i)=>{
+  if(a.thinkT>0)a.thinkT-=dt;
+  if(a.cur){const c=a.cur;
+   if(c.ph==='go'&&a.loc==='seat'&&!a.wp.length)c.ph='think';
+   if(c.ph==='think'||c.ph==='work'){c.p+=dt/c.dur;if(c.ph==='think'&&c.p>.2)c.ph='work';if(c.p>=1)finish(a)}
+  }else if(i&&!a.wp.length&&a.loc==='seat'){a.restT-=dt;if(a.restT<=0&&!a.queue.length){a.restT=9999;goLounge(a)}}
+  const walking=a.wp.length>0;
+  const ts=(!walking&&a.loc==='seat')?1:0;
+  a.sit+=Math.sign(ts-a.sit)*Math.min(Math.abs(ts-a.sit),dt*3.5);
+  if(walking&&a.sit<.05){
+   const w=a.wp[0],dx=w[0]-a.g.position.x,dz=w[1]-a.g.position.z,d=Math.hypot(dx,dz),s=dt*2.6;
+   if(d<=s){a.g.position.x=w[0];a.g.position.z=w[1];a.wp.shift();if(!a.wp.length){a.loc=a.dest;a.face=a.loc==='seat'?a.sface:a.lface}}
+   else{a.g.position.x+=dx/d*s;a.g.position.z+=dz/d*s;a.face=Math.atan2(dx,dz)}
+  }
+  a.g.rotation.y=ang(a.g.rotation.y,a.face,dt*8);
+  const m=modeOf(a,walking),mv=walking&&a.sit<.05,k=dt*9;
+  a.ch.position.y=-.3*a.sit;
+  let aL,aR,hx=0,hy=0,hz=0,bz=0;
+  if(mv){aL=Math.sin(t*8)*.6;aR=-aL}
+  else if(m==='think'){aL=-1;aR=-2.4+Math.sin(t*2)*.05;hx=.1;hy=Math.sin(t*.7+i)*.3;hz=Math.sin(t*1.1)*.12}
+  else if(m==='work'){aL=-1.1+Math.sin(t*17+i)*.1;aR=-1.1+Math.sin(t*17+2+i)*.1;hx=.25+Math.sin(t*3)*.04}
+  else if(m==='done'){aL=Math.sin(t*1.6+i)*.25;aR=-aL;hy=Math.sin(t*.6+i)*.8;bz=Math.sin(t*1.2+i)*.04;a.ch.position.y+=Math.abs(Math.sin(t*3+i))*.05}
+  else{aL=aR=a.sit>.5?-.85:Math.sin(t)*.1;hy=Math.sin(t*.5+i*1.3)*.6;hx=.05}
+  if(a.talk)hx+=Math.sin(t*14)*.07;a.arms[0].rotation.x=lp(a.arms[0].rotation.x,aL,k);a.arms[1].rotation.x=lp(a.arms[1].rotation.x,aR,k);
+  a.head.rotation.x=lp(a.head.rotation.x,hx,k);a.head.rotation.y=lp(a.head.rotation.y,hy,k);a.head.rotation.z=lp(a.head.rotation.z,hz,k);
+  a.ch.rotation.z=lp(a.ch.rotation.z,bz,k);
+  a.legs.forEach((l,j)=>{l.rotation.x=mv?Math.sin(t*8+j*Math.PI)*.6:-1.4*a.sit});
+  a.lab.position.y=2.75-.3*a.sit;a.bub.position.set(.85,2.2-.3*a.sit,0);
+  // bubble
+  const be=(i===0&&listening)?'🎤':(i===0&&speaking)?'🔊':m==='think'?'?':m==='done'?'\u2615':'';
+  if(be!==a.bi){a.bi=be;drawBubble(a,be);a.bub.visible=!!be}
+  if(be)a.bub.position.y+=Math.sin(t*3)*.06;
+  // status
+  let st,sc,p=0;
+  if(i===0){
+   if(listening){st='Listening to you...';sc='#ff4d4d'}else if(speaking){st='Speaking...';sc='#4dff88'}else if(a.thinkT>0){st='Analyzing request...';sc='#ffc83d'}
+   else if(busy>0){st='Coordinating '+busy+' agent'+(busy>1?'s':'');sc='#4dff88';let s=0;AG.forEach(q=>{if(q.cur)s+=q.cur.p});p=Math.min(1,s/busy)}
+   else if(walking){st='Walking';sc='#6cf'}
+   else{st='Ready for instructions';sc='#7aa8ff'}
+  }else if(walking){st=a.dest==='seat'?'Returning to desk':'Heading to lounge';sc='#6cf'}
+  else if(a.cur){const c=a.cur;p=c.p;st=(c.ph==='work'?'Working: ':c.ph==='think'?'Thinking: ':'Assigned: ')+c.title;sc=c.ph==='work'?'#4dff88':'#ffc83d'}
+  else if(a.loc==='lounge'){st='Completed, on break';sc='#ffc83d';p=1}
+  else{st='Idle at desk';sc='#7aa8ff'}
+  a.pp=p;a.stc=sc;
+  const key=st+Math.round(p*40);if(key!==a.key){a.key=key;drawLabel(a,st,sc,p)}
+  const sk=m+(m==='work'||m==='think'?Math.floor(t*4):'');if(sk!==a.sk){a.sk=sk;drawScreen(a,m,t)}
+  // beam
+  if(a.beam){a.beam.visible=!!a.cur;if(a.cur){const q=a.beam.geometry.attributes.position.array;q[0]=0;q[1]=2.1;q[2]=-3.3;q[3]=a.g.position.x;q[4]=2.1-.3*a.sit;q[5]=a.g.position.z;a.beam.geometry.attributes.position.needsUpdate=true;a.beam.material.opacity=.45+.35*Math.sin(t*6)}}
+ });
+ uiT-=dt;if(uiT<=0){uiT=.25;AG.forEach((a,i)=>{const c=chips[i];c.firstChild.style.background=a.stc;c.lastChild.textContent=Math.round(a.pp*100)+'%'})}
+ holo.rotation.y=t*.8;holo.rotation.x=t*.4;holoR.rotation.x=t*1.2;holoR.rotation.y=t*.5;hs.position.y=3+Math.sin(t*2)*.08;
+ r1.scale.setScalar(1+Math.sin(t*1.5)*.01);L1.intensity=1.3+Math.sin(t*2)*.15;
+ const cp=Math.sin(ph),tx=0,tz=0;
+ cam.position.set(tx+cp*Math.sin(th)*rad,ty+Math.cos(ph)*rad,tz+cp*Math.cos(th)*rad);cam.lookAt(0,ty,0);
+ R.render(S,cam)}
+requestAnimationFrame(frame);
+})();
+</script>
+</body></html>
+  
