@@ -38,6 +38,11 @@ html,body{height:100%;background:#050a18;color:#e8f6ff;font:13px system-ui,sans-
 #set select,#set #sa{width:100%;margin-top:4px;background:#0a1630;color:#fff;border:1px solid #19d3ff88;border-radius:6px;padding:7px;font-size:14px}
 #set .row{display:flex;gap:6px;margin:8px 0}#set .row button{flex:1;background:#0c1f40;color:#cfeaff;border:1px solid #19d3ff88;border-radius:8px;padding:8px}
 #sn{font-size:11.5px;color:#9fb8d8;line-height:1.45}
+#appr{display:none;position:fixed;left:14px;right:14px;top:22%;background:#1a0f05f5;border:2px solid #ff9f1a;border-radius:14px;padding:14px;z-index:9;font-size:14px}
+#appr h4{color:#ff9f1a;margin-bottom:6px}#appr p{margin:4px 0;color:#ffe2b8}#appr #ap_t{font-weight:700;color:#fff}
+#appr input{width:100%;margin:8px 0;padding:10px;font-size:16px;background:#0a1630;color:#fff;border:1px solid #ff9f1a;border-radius:8px}
+#appr .row{display:flex;gap:8px}#appr .row button{flex:1;padding:10px;border-radius:8px;border:0;font-weight:700}
+#ap_ok{background:#ff9f1a;color:#200}#ap_no{background:#2a3350;color:#fff}
 </style></head><body>
 <canvas id="c"></canvas>
 <div id="err">Three.js could not load. Connect to the internet and reload the page.</div>
@@ -49,15 +54,23 @@ html,body{height:100%;background:#050a18;color:#e8f6ff;font:13px system-ui,sans-
 <form id="f"><button type="button" id="mic">🎤 Talk to Alex</button><input id="in" placeholder="Type or tap the mic..." autocomplete="off"><button>Send</button></form>
 </div>
 <div id="lis"><span id="lt">Listening... speak now (tap to stop)</span></div>
+<div id="appr"><h4>Approval chahiye (sensitive action)</h4><p id="ap_t"></p><p id="ap_d"></p>
+<input id="ap_p" type="password" inputmode="numeric" placeholder="Owner PIN type karein" autocomplete="off">
+<div class="row"><button type="button" id="ap_ok">Approve</button><button type="button" id="ap_no">Cancel</button></div>
+<p style="font-size:12px">Approval sirf aapke PIN se hota hai, awaaz se nahi. Alex khud kabhi approve nahi kar sakta.</p></div>
 <div id="set"><h4>Alex voice settings</h4>
 <label><input type="checkbox" id="sv">Alex's voice on (unmute)</label>
 <label><input type="checkbox" id="sr">Speak Alex's replies aloud</label>
 <label><input type="checkbox" id="sd">Announce completed tasks (simulated)</label>
 <label><input type="checkbox" id="se">Announce important backend events</label>
+<label>Mode<select id="sm"><option value="demo">DEMO (no real AI, keyword commands only)</option><option value="live">LIVE AI (needs backend + owner PIN)</option></select></label>
 <label>Language<select id="sl"><option value="hi-IN">Hindi / Hinglish</option><option value="en-IN">English (India)</option></select></label>
 <label>Backend URL (never put an API key here)<input id="sa" placeholder="https://your-worker.workers.dev"></label>
+<label>Hindi reply script<select id="ss"><option value="deva">Devanagari (best Hindi voice)</option><option value="roman">Roman Hinglish</option></select></label>
+<label>Owner PIN (kept in memory only, never saved)<input id="pn" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN"></label>
+<div class="row"><button type="button" id="un">Unlock Live AI</button><button type="button" id="nc">New conversation</button></div>
 <div class="row"><button type="button" id="sT">Test backend</button><button type="button" id="tv">Test voice</button><button type="button" id="sx">Close</button></div>
-<p id="sn">The microphone starts only when you tap "Talk to Alex", and stops after one sentence. This app does not store audio. Chrome may send speech to its own speech service for recognition. Alex speaks only while this page is open. Without a backend URL, replies are DEMO replies, and agent task results are always SIMULATED.</p></div>
+<p id="sn">Mic starts only when you tap "Talk to Alex" and stops after one sentence. This app does not store audio; Chrome may send speech to its own speech service. Alex speaks only while this page is open. In DEMO mode nothing uses real AI. In LIVE AI mode your messages go to your own backend and then to the AI model; the conversation context lives only in this open page. Agent task results are always SIMULATED. Sensitive actions (withdrawals etc.) can never be executed by Alex: they need your typed PIN, and this build has no real withdrawal system connected.</p></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (()=>{
@@ -239,24 +252,40 @@ function kick(a){if(a.cur||!a.queue.length)return;a.cur=a.queue.shift();a.cur.ph
 function assign(a,title){a.queue.push({title,p:0,ph:'q',dur:7+Math.random()*6});kick(a)}
 function finish(a){
  const c=a.cur;a.cur=null;a.restT=3.5;
- say(a.n,RES[a.n](),'r','SIMULATED');announce('done',CFG.lang==='en-IN'?`Simulated update: ${a.n} finished its task.`:`Demo update: ${a.n} ka task poora hua.`,false);
+ const rt=RES[a.n]();resultsLog.push({agent:a.n,task:c.title,result:rt,simulated:true});if(resultsLog.length>12)resultsLog.shift();say(a.n,rt,'r','SIMULATED');announce('done',CFG.lang==='en-IN'?`Simulated update: ${a.n} finished its task.`:`Demo update: ${a.n} ka task poora hua.`,false);
  if(a.queue.length)kick(a)}
 function pick(txt){const set=[];RULES.forEach(r=>{if(r[0].test(txt))r[1].forEach(n=>{if(!set.includes(n))set.push(n)})});return set}
 function dispatch(set){set.forEach((n,k)=>setTimeout(()=>{const a=AG.find(q=>q.n===n);if(a&&TASK[n])assign(a,TASK[n])},k*450))}
-function demoReply(txt){let set=pick(txt),note='';const hi=CFG.lang!=='en-IN';if(!set.length){set=['Insight'];note=hi?' Pakka nahi tha, isliye Insight se shuru kar raha hoon.':' Not sure who fits, so starting with Insight.'}dispatch(set);return(hi?`Theek hai. ${set.join(', ')} ko kaam de raha hoon.`:`Understood. Assigning: ${set.join(', ')}.`)+note}
-async function ask(txt){const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),20000);
- try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:txt,lang:CFG.lang,history:hist.slice(-6),agents:AG.slice(1).map(a=>({name:a.n,busy:!!a.cur}))}),signal:ctl.signal});
+function demoReply(txt){const hi=CFG.lang!=='en-IN',set=pick(txt);
+ if(set.length){dispatch(set);return hi?`ठीक है। ${set.join(', ')} को काम दे रहा हूँ। (डेमो: नतीजे नकली होंगे)`:`Understood. Assigning: ${set.join(', ')}. (Demo: results will be simulated.)`}
+ if(/^\s*(hi|hello|hey|namaste|नमस्ते|हेलो)/i.test(txt))return hi?'नमस्ते! मैं अभी डेमो मोड में हूँ, इसलिए सिर्फ़ ऐप के कमांड समझता हूँ।':'Hello! I am in demo mode, so I only understand app commands.';
+ return hi?'डेमो मोड में मैं सिर्फ़ ऐप के कमांड समझता हूँ, जैसे "offerwall check karo"। सामान्य बातचीत के लिए सेटिंग्स में LIVE AI चालू करें।':'In demo mode I only understand app commands. For normal conversation, turn on LIVE AI in Settings.'}
+async function ask(txt){const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),25000);
+ try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/chat',{method:'POST',headers:{'Content-Type':'application/json','X-Owner-Pin':pin},body:JSON.stringify({message:txt,lang:CFG.lang,script:CFG.script,history:hist.slice(-12),agents:AG.slice(1).map(a=>({name:a.n,busy:!!a.cur,task:a.cur?a.cur.title:null})),results:resultsLog.slice(-8)}),signal:ctl.signal});
+  if(r.status===401||r.status===429){pin='';setMode('locked');throw new Error(r.status===401?'PIN galat. Dubara unlock karein':'Bahut galat PIN, kuch der baad try karein')}
   if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(typeof j.reply!=='string')throw new Error('bad reply');
-  hist.push({role:'user',content:txt},{role:'assistant',content:j.reply});return{reply:j.reply,assign:Array.isArray(j.assign)?j.assign:[]}}finally{clearTimeout(to)}}
+  hist.push({role:'user',content:txt},{role:'assistant',content:j.reply});while(hist.length>24)hist.shift();lastLive=Date.now();
+  return{reply:j.reply,mode:j.mode==='manage'?'manage':'chat',assign:Array.isArray(j.assign)?j.assign:[],action:j.action||null}}finally{clearTimeout(to)}}
+const ACT={approve_withdrawal:'Withdrawal approve karna',reject_withdrawal:'Withdrawal reject karna',change_coin_rate:'Coin rate badalna',change_ad_settings:'Ad settings badalna',ban_user:'User ban karna',send_user_notification:'Users ko notification bhejna',delete_data:'Data delete karna'};
+function proposeAction(a){if(!a||!ACT[a.type])return;
+ if(pending){say('System','Pehle pichla approval pura karein ya cancel karein.','a','SYSTEM');return}
+ pending={type:a.type,detail:String(a.detail||'').slice(0,200),exp:Date.now()+300000};
+ $('ap_t').textContent=ACT[a.type];$('ap_d').textContent=pending.detail||'(details nahi)';$('ap_p').value='';$('appr').style.display='block';
+ say('System','Sensitive action: '+ACT[a.type]+'. Screen par PIN type karke hi approve hoga. Awaaz se approval nahi hota.','a','APPROVAL NEEDED')}
 
 /* chat UI */
 const log=$('log');
 function say(who,txt,cls,tag){const d=document.createElement('div');d.className='m '+(cls||'');if(tag){const g=document.createElement('span');g.className='tg'+(tag==='AI LIVE'||tag==='BACKEND EVENT'?' ok':'');g.textContent=tag;d.appendChild(g)}const b=document.createElement('b');b.textContent=who+': ';d.appendChild(b);d.appendChild(document.createTextNode(txt));log.appendChild(d);log.scrollTop=1e9;while(log.children.length>50)log.removeChild(log.firstChild)}
 async function send(txt,voice){txt=txt.trim();if(!txt)return;say('You',txt,'u');AG[0].thinkT=40;
- let reply,tag,spoken;
- if(CFG.api){try{const r=await ask(txt);reply=r.reply;tag='AI LIVE';spoken=reply;dispatch(r.assign.filter(n=>TASK[n]));setMode('live')}catch(e){setMode('err');say('System','Backend error ('+e.message+'). Using demo mode instead.','a','SYSTEM')}}
- if(reply===undefined){await new Promise(r=>setTimeout(r,1200));reply=demoReply(txt);tag='DEMO';spoken=(CFG.lang==='en-IN'?'Demo mode. ':'Demo mode. ')+reply}
+ let reply,tag,spoken,act=null;
+ if(CFG.mode==='live'){
+  if(pin&&Date.now()-lastLive>1800000){pin='';setMode('locked')}
+  if(!CFG.api||!pin){AG[0].thinkT=0;setMode();say('System',!CFG.api?'LIVE AI mode: backend URL missing (Settings).':'LIVE AI locked. Settings mein owner PIN daal kar Unlock karein.','a','SYSTEM');return}
+  try{const r=await ask(txt);reply=r.reply;tag='AI LIVE';spoken=reply;if(r.mode==='manage')dispatch(r.assign.filter(n=>TASK[n]));act=r.action;setMode('live')}
+  catch(e){if(e.name!=='Error'||!/PIN/.test(e.message))setMode('err');AG[0].thinkT=0;say('System','LIVE AI error: '+(e.name==='AbortError'?'timeout':e.message)+'. Demo mode par nahi gaya.','a','SYSTEM');return}
+ }else{await new Promise(r=>setTimeout(r,900));reply=demoReply(txt);tag='DEMO';spoken='Demo mode. '+reply}
  AG[0].thinkT=0;say('Alex',reply,'',tag);
+ if(act)proposeAction(act);
  if(CFG.voice&&(voice||CFG.reply))speak(spoken,true)}
 $('f').addEventListener('submit',e=>{e.preventDefault();const i=$('in');send(i.value);i.value=''});
 ['Check offerwall performance','Find app bugs',"Generate today's report",'Check AdMob performance','Security check','Review support tickets'].forEach(q=>{const b=document.createElement('button');b.textContent=q;b.onclick=()=>send(q);$('qs').appendChild(b)});
@@ -265,19 +294,20 @@ say('Alex','Welcome to Earning Rusher HQ. Tell me what to check and I will assig
 const chips=AG.map(a=>{const d=document.createElement('div');d.className='chip';d.innerHTML='<i></i>'+a.n+' <b>0%</b>';$('chips').appendChild(d);return d});
 
 /* voice: mic starts only on button tap; nothing records in background */
-const CFG=Object.assign({voice:true,reply:true,done:true,events:true,lang:'hi-IN',api:''},(()=>{try{return JSON.parse(localStorage.getItem('erCfg')||'{}')}catch(e){return{}}})());
+const CFG=Object.assign({voice:true,reply:true,done:true,events:true,lang:'hi-IN',api:'',mode:'demo',script:'deva'},(()=>{try{return JSON.parse(localStorage.getItem('erCfg')||'{}')}catch(e){return{}}})());
 const saveCfg=()=>{try{localStorage.setItem('erCfg',JSON.stringify(CFG))}catch(e){}};
 const SRc=window.SpeechRecognition||window.webkitSpeechRecognition,TTS='speechSynthesis' in window;
-let rec=null,listening=false,speaking=false,unlocked=false,heard='',lastSpoke=0,lto=0,asked=false;const pend=[],hist=[];
-function setMode(k){const m={demo:['DEMO MODE: no real AI','#ffc83d'],set:['BACKEND SET: not tested','#ffc83d'],ok:['BACKEND REACHABLE','#4dff88'],live:['AI LIVE: replied OK','#4dff88'],err:['BACKEND ERROR','#ff6b6b']}[k];$('mode').textContent=m[0];$('mode').style.color=m[1]}
-setMode(CFG.api?'set':'demo');
+let rec=null,listening=false,speaking=false,unlocked=false,heard='',lastSpoke=0,lto=0,asked=false;const pend=[],hist=[],resultsLog=[];let pin='',lstate='set',lastLive=0,pending=null;
+const BADGE={demo:['DEMO MODE: no real AI','#ffc83d'],nobe:['LIVE AI: backend URL missing','#ff6b6b'],locked:['LIVE AI: locked (enter PIN)','#ffc83d'],set:['LIVE AI: not tested yet','#ffc83d'],ok:['LIVE AI: backend reachable','#4dff88'],live:['LIVE AI: replied OK','#4dff88'],err:['LIVE AI: ERROR','#ff6b6b']};
+function setMode(k){if(k)lstate=k;const key=CFG.mode==='demo'?'demo':!CFG.api?'nobe':!pin?'locked':lstate;const m=BADGE[key];$('mode').textContent=m[0];$('mode').style.color=m[1]}
+setMode();
 function uiL(){$('lis').style.display=listening?'flex':'none';$('mic').textContent=listening?'⏹ Stop':'🎤 Talk to Alex';$('mic').classList.toggle('on',listening)}
 function syncMute(){$('mu').textContent=CFG.voice?'🔊':'🔇';$('sv').checked=CFG.voice}
 const quiet=()=>{try{speechSynthesis.cancel()}catch(e){}pend.length=0};
 function pickVoice(){const v=speechSynthesis.getVoices(),p=CFG.lang.slice(0,2);return v.find(x=>x.lang===CFG.lang)||v.find(x=>x.lang.toLowerCase().startsWith(p))||null}
 function speak(txt,now){
  if(!TTS||!CFG.voice||!unlocked||!txt)return;if(now)speechSynthesis.cancel();
- const u=new SpeechSynthesisUtterance(txt.slice(0,260));u.lang=CFG.lang;const v=pickVoice();if(v)u.voice=v;
+ const u=new SpeechSynthesisUtterance(txt.slice(0,420));u.lang=CFG.lang;const v=pickVoice();if(v)u.voice=v;
  u.onstart=()=>{speaking=true;AG[0].talk=1};u.onend=u.onerror=()=>{speaking=false;AG[0].talk=0;lastSpoke=Date.now()};
  speechSynthesis.speak(u)}
 // announcements: queued, merged, never interrupt, min 12s gap, max 3 per batch
@@ -299,19 +329,32 @@ function shutdown(){heard='';try{rec&&rec.abort()}catch(e){}listening=false;quie
 document.addEventListener('visibilitychange',()=>{if(document.hidden)shutdown()});addEventListener('pagehide',shutdown);
 // backend events: only items the backend marks verified:true; shown once each
 let seen=new Set();try{seen=new Set(JSON.parse(localStorage.getItem('erSeen')||'[]'))}catch(e){}
-async function pollEvents(){if(!CFG.api||document.hidden)return;try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/events',{cache:'no-store'});if(!r.ok)return;const j=await r.json();let n=0;
+async function pollEvents(){if(CFG.mode!=='live'||!CFG.api||!pin||document.hidden)return;try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/events',{cache:'no-store',headers:{'X-Owner-Pin':pin}});if(!r.ok)return;const j=await r.json();let n=0;
  (j.events||[]).forEach(ev=>{if(n>=3||!ev||ev.verified!==true||!ev.id||!ev.title||seen.has(ev.id))return;n++;seen.add(ev.id);const imp=ev.severity==='high'||ev.severity==='critical';announce(imp?'events':'none',(CFG.lang==='en-IN'?'Important event: ':'Zaroori suchna: ')+String(ev.title).slice(0,120),true,'BACKEND EVENT')});
  try{localStorage.setItem('erSeen',JSON.stringify([...seen].slice(-100)))}catch(e){}}catch(e){}}
 setInterval(pollEvents,60000);
 [['sv','voice'],['sr','reply'],['sd','done'],['se','events']].forEach(([id,k])=>{const e=$(id);e.checked=CFG[k];e.onchange=()=>{CFG[k]=e.checked;saveCfg();if(k==='voice')syncMute();if(!CFG.voice)quiet()}});
 $('mu').onclick=()=>{CFG.voice=!CFG.voice;saveCfg();syncMute();if(!CFG.voice)quiet()};
 $('sl').value=CFG.lang;$('sl').onchange=()=>{CFG.lang=$('sl').value;saveCfg()};
-$('sa').value=CFG.api;$('sa').onchange=()=>{let v=$('sa').value.trim();if(v&&!/^https:\/\/|^http:\/\/localhost/.test(v)){say('System','Backend URL must start with https://','a','SYSTEM');v='';$('sa').value=''}CFG.api=v;saveCfg();setMode(v?'set':'demo')};
+$('sa').value=CFG.api;$('sa').onchange=()=>{let v=$('sa').value.trim();if(v&&!/^https:\/\/|^http:\/\/localhost/.test(v)){say('System','Backend URL must start with https://','a','SYSTEM');v='';$('sa').value=''}CFG.api=v;saveCfg();setMode()};
 $('gs').onclick=()=>{const p=$('set');p.style.display=p.style.display==='block'?'none':'block'};$('sx').onclick=()=>{$('set').style.display='none'};
 $('tv').onclick=()=>{unlocked=true;speak(CFG.lang==='en-IN'?'This is a voice test from Alex.':'Namaste, main Alex hoon. Yeh awaaz ka test hai.',true)};
-$('sT').onclick=async()=>{if(!CFG.api){say('System','No backend URL yet. Still in demo mode.','a','SYSTEM');return}
- try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/health'),j=await r.json();if(j.ok&&j.hasKey){setMode('ok');say('System','Backend reachable and API key present. Send a chat message to test a real AI reply.','a','SYSTEM')}else{setMode('err');say('System','Backend reached, but no API key is set on it.','a','SYSTEM')}}
- catch(e){setMode('err');say('System','Could not reach backend. Check URL and ALLOWED_ORIGIN (CORS).','a','SYSTEM')}};
+$('sT').onclick=async()=>{if(!CFG.api){say('System','Backend URL abhi nahi hai.','a','SYSTEM');return}
+ try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/health'),j=await r.json();
+  if(j.ok&&j.hasKey&&j.hasPin){setMode('ok');say('System','Backend mil gaya; API key aur OWNER_PIN set hain. Ab PIN se Unlock karke chat karein: asli AI jawab par "AI LIVE" tag aayega.','a','SYSTEM')}
+  else{setMode('err');say('System','Backend mila par '+(!j.hasKey?'ANTHROPIC_API_KEY ':'')+(!j.hasPin?'OWNER_PIN ':'')+'set nahi hai.','a','SYSTEM')}}
+ catch(e){setMode('err');say('System','Backend se connect nahi hua. URL aur ALLOWED_ORIGIN (CORS) check karein.','a','SYSTEM')}};
+$('sm').value=CFG.mode;$('sm').onchange=()=>{CFG.mode=$('sm').value;saveCfg();setMode();say('System',CFG.mode==='live'?'LIVE AI mode chalu. Settings mein PIN se Unlock karein.':'DEMO mode chalu. Koi asli AI use nahi ho raha.','a','SYSTEM')};
+$('ss').value=CFG.script;$('ss').onchange=()=>{CFG.script=$('ss').value;saveCfg()};
+$('un').onclick=()=>{const v=$('pn').value.trim();$('pn').value='';if(!v)return;pin=v;lastLive=Date.now();setMode('set');say('System','PIN sirf is session ki memory mein hai. Ab chat karke LIVE AI test karein.','a','SYSTEM')};
+$('nc').onclick=()=>{hist.length=0;say('System','Nayi conversation: pichla context hata diya.','a','SYSTEM')};
+$('ap_ok').onclick=async()=>{if(!pending)return;if(Date.now()>pending.exp){say('System','Approval expire ho gaya. Alex se dobara kahein.','a','SYSTEM');pending=null;$('appr').style.display='none';return}
+ const p=$('ap_p').value;$('ap_p').value='';if(!p||!CFG.api)return;
+ try{const r=await fetch(CFG.api.replace(/\/$/,'')+'/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pin:p,action:{type:pending.type,detail:pending.detail}})}),j=await r.json();
+  if(r.ok&&j.approved){say('System','Owner PIN verify hua: '+ACT[pending.type]+'. Par kuch EXECUTE nahi hua: is build mein asli withdrawal/settings system juda hi nahi hai (SIMULATED).','a','APPROVED, NOT EXECUTED');pending=null;$('appr').style.display='none'}
+  else say('System',(j&&j.error)||'Approval fail: PIN galat ya lock.','a','SYSTEM')}
+ catch(e){say('System','Approval ke liye backend se connect nahi hua.','a','SYSTEM')}};
+$('ap_no').onclick=()=>{if(pending)say('System','Action cancel: '+ACT[pending.type],'a','CANCELLED');pending=null;$('appr').style.display='none'};
 $('mic').onclick=startListen;$('lis').onclick=()=>{try{rec.stop()}catch(e){}};
 if(!SRc||!TTS){$('mic').style.opacity=.5}
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev,()=>{unlocked=true},{once:true,passive:true}));
@@ -402,4 +445,3 @@ requestAnimationFrame(frame);
 })();
 </script>
 </body></html>
-  
